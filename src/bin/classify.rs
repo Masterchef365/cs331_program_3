@@ -26,31 +26,31 @@ fn main() -> Result<()> {
 }
 
 fn infer(true_features: &[usize], table: &CondProbTable, vocab_len: usize) -> bool {
-    log_sum(true_features, true, table, vocab_len)
-        >= log_sum(true_features, false, table, vocab_len)
+    log_sum(true, true_features, table, vocab_len)
+        >= log_sum(false, true_features, table, vocab_len)
 }
 
-fn log_sum(true_features: &[usize], cd: bool, table: &CondProbTable, vocab_len: usize) -> f32 {
+fn log_sum(cd: bool, true_features: &[usize], table: &CondProbTable, vocab_len: usize) -> f32 {
     let mut sum = table.p_cd(cd).ln();
-    let mut pos = 0;
+    let mut feature = 0;
 
     // Sum sparse features
-    for &feature in true_features {
+    for &true_feature in true_features {
         // False features in between true features
-        while pos != feature {
-            sum += table.p_x_cd(cd, false, pos).ln();
-            pos += 1;
+        while feature != true_feature {
+            sum += table.p_x_cd(cd, false, feature).ln();
+            feature += 1;
         }
 
         // True features
-        sum += table.p_x_cd(cd, true, feature).ln();
-        pos += 1;
+        sum += table.p_x_cd(cd, true, true_feature).ln();
+        feature += 1;
     }
 
     // Sum remaining false features
-    while pos < vocab_len {
-        sum += table.p_x_cd(cd, false, pos).ln();
-        pos += 1;
+    while feature < vocab_len {
+        sum += table.p_x_cd(cd, false, feature).ln();
+        feature += 1;
     }
 
     sum
@@ -82,7 +82,7 @@ impl CondProbTable {
                 table_cd[feature] += 1;
             }
             if row.class {
-                n_cd_true = 0;
+                n_cd_true += 1;
             }
         }
 
@@ -121,7 +121,7 @@ impl CondProbTable {
         // Number of records with X_feature=x and CD=cd
         let p_x_count = match x {
             true => n_x_true,
-            false => self.n_rows as u64 - n_x_true,
+            false => self.p_cd_count(cd) - n_x_true,
         };
 
         let n_j = 2.;
