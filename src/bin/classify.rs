@@ -1,5 +1,5 @@
 use anyhow::Result;
-use programming_assn_3::{read_vocab, read_dataset, Dataset};
+use programming_assn_3::{read_dataset, read_vocab, Dataset};
 use std::fs::File;
 use std::io::{BufReader, Seek, SeekFrom};
 
@@ -12,14 +12,48 @@ fn main() -> Result<()> {
 
     let table = CondProbTable::from_data(&training_data, training_vocab.len());
 
-    let feature = 0;
-    for &cd in &[true, false] {
-        for &x in &[true, false] {
-            println!("CD={}, X={}: {}", cd, x, table.p_x_cd(cd, x, feature));
+    // Evaluate training set
+    let mut n_correct = 0;
+    for row in &training_data {
+        let prediction = infer(&row.features, &table, training_vocab.len());
+        if prediction == row.class {
+            n_correct += 1;
         }
     }
+    println!("Training set accuracy: {}", n_correct as f32 / training_data.len() as f32);
 
     Ok(())
+}
+
+fn infer(true_features: &[usize], table: &CondProbTable, vocab_len: usize) -> bool {
+    log_sum(true_features, true, table, vocab_len)
+        >= log_sum(true_features, false, table, vocab_len)
+}
+
+fn log_sum(true_features: &[usize], cd: bool, table: &CondProbTable, vocab_len: usize) -> f32 {
+    let mut sum = table.p_cd(cd).ln();
+    let mut pos = 0;
+
+    // Sum sparse features
+    for &feature in true_features {
+        // False features in between true features
+        while pos != feature {
+            sum += table.p_x_cd(cd, false, pos).ln();
+            pos += 1;
+        }
+
+        // True features
+        sum += table.p_x_cd(cd, true, feature).ln();
+        pos += 1;
+    }
+
+    // Sum remaining false features
+    while pos < vocab_len {
+        sum += table.p_x_cd(cd, false, pos).ln();
+        pos += 1;
+    }
+
+    sum
 }
 
 /// Conditional probability table of a trained bayes net
@@ -93,7 +127,7 @@ impl CondProbTable {
         let n_j = 2.;
         if n_x_true == 0 {
             // Dirichlet prior
-            1. / n_j 
+            1. / n_j
         } else {
             (p_x_count as f32 + 1.) / (self.p_cd_count(cd) as f32 + n_j)
         }
