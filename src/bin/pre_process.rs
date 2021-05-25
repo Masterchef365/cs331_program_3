@@ -30,7 +30,7 @@ fn write_features(file: &mut impl Write, dataset: &Dataset, vocab: &Vocabulary) 
     for word in vocab {
         write!(file, "{},", word)?;
     }
-    writeln!(file)?;
+    writeln!(file, "classlabel")?;
 
     // Write rows - essentially converting to a dense representation from a sparse one
     for row in dataset {
@@ -52,6 +52,7 @@ fn write_features(file: &mut impl Write, dataset: &Dataset, vocab: &Vocabulary) 
             pos += 1;
         }
 
+        // Write class
         if row.class {
             write!(file, "1")?; 
         } else {
