@@ -12,7 +12,7 @@ fn main() -> Result<()> {
 
     let table = CondProbTable::from_data(&training_data, training_vocab.len());
 
-    let feature = 1;
+    let feature = 0;
     for &cd in &[true, false] {
         for &x in &[true, false] {
             println!("CD={}, X={}: {}", cd, x, table.p_x_cd(cd, x, feature));
@@ -61,8 +61,16 @@ impl CondProbTable {
     }
 
     /// Calculate P(CD=true)
-    pub fn p_cd(&self) -> f32 {
-        self.n_cd_true as f32 / self.n_rows as f32
+    pub fn p_cd(&self, cd: bool) -> f32 {
+        self.p_cd_count(cd) as f32 / self.n_rows as f32
+    }
+
+    /// Number of records with CD=cd
+    fn p_cd_count(&self, cd: bool) -> u64 {
+        match cd {
+            true => self.n_cd_true,
+            false => self.n_rows as u64 - self.n_cd_true,
+        }
     }
 
     /// Calculate P(CD=cd, X_feature=x). Returns uniform Dirichlet Prior if no rows had this class
@@ -82,18 +90,12 @@ impl CondProbTable {
             false => self.n_rows as u64 - n_x_true,
         };
 
-        // Number of records with CD=cd
-        let p_cd_count = match cd {
-            true => self.n_cd_true,
-            false => self.n_rows as u64 - self.n_cd_true,
-        };
-
         let n_j = 2.;
         if n_x_true == 0 {
             // Dirichlet prior
             1. / n_j 
         } else {
-            (p_x_count as f32 + 1.) / (self.n_rows as f32 + n_j)
+            (p_x_count as f32 + 1.) / (self.p_cd_count(cd) as f32 + n_j)
         }
     }
 }

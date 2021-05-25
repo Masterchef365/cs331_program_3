@@ -30,7 +30,7 @@ pub fn read_vocab(reader: &mut impl BufRead) -> Result<Vocabulary> {
         parts.pop();
 
         // Segment words and add them to the vocab
-        for s in line.split_whitespace() {
+        for s in parts {
             let word = prepare_word(s);
             if !word.is_empty() {
                 vocab.insert(word);
