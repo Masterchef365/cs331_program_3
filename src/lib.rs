@@ -31,7 +31,10 @@ pub fn read_vocab(reader: &mut impl BufRead) -> Result<Vocabulary> {
 
         // Segment words and add them to the vocab
         for s in line.split_whitespace() {
-            vocab.insert(prepare_word(s));
+            let word = prepare_word(s);
+            if !word.is_empty() {
+                vocab.insert(word);
+            }
         }
     }
 
@@ -62,7 +65,7 @@ pub fn read_dataset(reader: &mut impl BufRead, vocab: &[String]) -> Result<Datas
 
         // Segment words and add them to the vocab, sorting them in order
         let mut features = vec![];
-        for word in line.split_whitespace() {
+        for word in parts {
             let word = prepare_word(word);
             if word.is_empty() {
                 continue;
@@ -85,5 +88,8 @@ pub fn read_dataset(reader: &mut impl BufRead, vocab: &[String]) -> Result<Datas
 
 /// Prepare a word
 pub fn prepare_word(word: &str) -> String {
-    word.chars().filter(char::is_ascii_alphanumeric).collect()
+    word.chars()
+        .filter(char::is_ascii_alphanumeric)
+        .map(|c| c.to_ascii_lowercase())
+        .collect()
 }
