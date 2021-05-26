@@ -90,6 +90,5 @@ pub fn read_dataset(reader: &mut impl BufRead, vocab: &[String]) -> Result<Datas
 pub fn prepare_word(word: &str) -> String {
     word.chars()
         .filter(char::is_ascii_alphanumeric)
-        //.map(|c| c.to_ascii_lowercase())
         .collect()
 }

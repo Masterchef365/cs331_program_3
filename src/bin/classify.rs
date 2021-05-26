@@ -36,7 +36,7 @@ fn eval(dataset: &Dataset, table: &CondProbTable, vocab_len: usize) -> f32 {
 
 fn infer(true_features: &[usize], table: &CondProbTable, vocab_len: usize) -> bool {
     log_sum(true, true_features, table, vocab_len)
-        > log_sum(false, true_features, table, vocab_len)
+        < log_sum(false, true_features, table, vocab_len)
 }
 
 fn log_sum(cd: bool, true_features: &[usize], table: &CondProbTable, vocab_len: usize) -> f32 {
