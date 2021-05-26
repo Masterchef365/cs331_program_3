@@ -1,0 +1,5 @@
+From trainingSet.txt:
+Training set accuracy: 0.91783565 (91.8%)
+
+From testSet.txt:
+Test set accuracy: 0.61770624 (61.8%)

@@ -18,7 +18,7 @@ fn main() -> Result<()> {
     // Evaluate test set
     let mut test_file = BufReader::new(File::open("testSet.txt")?);
     let test_data = read_dataset(&mut test_file, &training_vocab)?;
-    println!("Training set accuracy: {}", eval(&test_data, &table, training_vocab.len()));
+    println!("Test set accuracy: {}", eval(&test_data, &table, training_vocab.len()));
 
     Ok(())
 }
