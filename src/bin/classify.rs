@@ -13,21 +13,30 @@ fn main() -> Result<()> {
     let table = CondProbTable::from_data(&training_data, training_vocab.len());
 
     // Evaluate training set
-    let mut n_correct = 0;
-    for row in &training_data {
-        let prediction = infer(&row.features, &table, training_vocab.len());
-        if prediction == row.class {
-            n_correct += 1;
-        }
-    }
-    println!("Training set accuracy: {}", n_correct as f32 / training_data.len() as f32);
+    println!("Training set accuracy: {}", eval(&training_data, &table, training_vocab.len()));
+
+    // Evaluate test set
+    let mut test_file = BufReader::new(File::open("testSet.txt")?);
+    let test_data = read_dataset(&mut test_file, &training_vocab)?;
+    println!("Training set accuracy: {}", eval(&test_data, &table, training_vocab.len()));
 
     Ok(())
 }
 
+fn eval(dataset: &Dataset, table: &CondProbTable, vocab_len: usize) -> f32 {
+    let mut n_correct = 0;
+    for row in dataset {
+        let prediction = infer(&row.features, table, vocab_len);
+        if prediction == row.class {
+            n_correct += 1;
+        }
+    }
+    n_correct as f32 / dataset.len() as f32
+}
+
 fn infer(true_features: &[usize], table: &CondProbTable, vocab_len: usize) -> bool {
     log_sum(true, true_features, table, vocab_len)
-        >= log_sum(false, true_features, table, vocab_len)
+        > log_sum(false, true_features, table, vocab_len)
 }
 
 fn log_sum(cd: bool, true_features: &[usize], table: &CondProbTable, vocab_len: usize) -> f32 {
@@ -125,7 +134,7 @@ impl CondProbTable {
         };
 
         let n_j = 2.;
-        if n_x_true == 0 {
+        if p_x_count == 0 {
             // Dirichlet prior
             1. / n_j
         } else {
